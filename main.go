@@ -20,6 +20,10 @@ import (
 type m map[string]interface{}
 
 func Main(c *config.C, configTest bool, buildVersion string, logger *logrus.Logger, tunFd *int) (retcon *Control, reterr error) {
+	return MainWithProvidedTUN(c, configTest, buildVersion, logger, tunFd, nil)
+}
+
+func MainWithProvidedTUN(c *config.C, configTest bool, buildVersion string, logger *logrus.Logger, tunFd *int, setTun overlay.Device) (retcon *Control, reterr error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	// Automatically cancel the context if Main returns an error, to signal all created goroutines to quit.
 	defer func() {
@@ -131,7 +135,7 @@ func Main(c *config.C, configTest bool, buildVersion string, logger *logrus.Logg
 	}
 
 	var tun overlay.Device
-	if !configTest {
+	if setTun == nil && !configTest {
 		c.CatchHUP(ctx)
 
 		tun, err = overlay.NewDeviceFromConfig(c, l, tunCidr, tunFd, routines)
@@ -144,6 +148,8 @@ func Main(c *config.C, configTest bool, buildVersion string, logger *logrus.Logg
 				tun.Close()
 			}
 		}()
+	} else {
+		tun = setTun
 	}
 
 	// set up our UDP listener

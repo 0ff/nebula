@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"strings"
 	"time"
 
@@ -18,6 +19,10 @@ type CertState struct {
 	rawCertificateNoKey []byte
 	publicKey           []byte
 	privateKey          []byte
+}
+
+func (c *CertState) GetCIDR() *net.IPNet {
+	return c.certificate.Details.Ips[0]
 }
 
 func NewCertState(certificate *cert.NebulaCertificate, privateKey []byte) (*CertState, error) {
